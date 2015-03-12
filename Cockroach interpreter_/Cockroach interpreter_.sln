@@ -1,0 +1,20 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2012
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Cockroach interpreter_", "Cockroach interpreter_\Cockroach interpreter_.vcxproj", "{240AFB8D-54C4-43DD-8E5D-640416BE016F}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		Release|Win32 = Release|Win32
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{240AFB8D-54C4-43DD-8E5D-640416BE016F}.Debug|Win32.ActiveCfg = Debug|Win32
+		{240AFB8D-54C4-43DD-8E5D-640416BE016F}.Debug|Win32.Build.0 = Debug|Win32
+		{240AFB8D-54C4-43DD-8E5D-640416BE016F}.Release|Win32.ActiveCfg = Release|Win32
+		{240AFB8D-54C4-43DD-8E5D-640416BE016F}.Release|Win32.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
