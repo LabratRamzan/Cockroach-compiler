@@ -1,0 +1,27 @@
+a= 10+10-5+5+15-80/2/2-20+10;
+b= 10/1-10/2;
+print(a);
+print(b);
+print(a*b-10*2);
+
+if (a == b)
+{
+	x= a-b;
+	while(x < 10)
+	{
+		x= x+2;
+		print(x)
+	};
+	print(x+a+b)
+};
+
+x= x-1*1/1*1-1/1+1*1;
+
+if (a+b <= x) print(a+b)
+else 
+{ 
+	print(a*a*b/b); 
+	a= a+1;
+ 	b= b-1; 
+	print(a*a*b/b) 
+}
