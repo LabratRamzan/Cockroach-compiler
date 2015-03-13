@@ -91,24 +91,18 @@
             case '}': return _keyword(Rbrace, 1);
             case '<': switch (text[pos + 1])
 							{
-                    case ' ':
-                    case '\t': return _keyword(Lt, 1);
                     case '=': return _keyword(Leq, 2);
-                    default: return 0;
+                    default: return _keyword(Lt, 1); 
                 }
             case '>': switch (text[pos + 1])
                 {
-                    case ' ':
-                    case '\t': return _keyword(Gt, 1);
                     case '=': return _keyword(Geq, 2);
-                    default: return 0;
+                    default: return _keyword(Gt, 1);
                 }
             case '=': switch (text[pos + 1])
                 {
-                    case ' ':
-                    case '\t': return _keyword(Assign, 1);
                     case '=': return _keyword(Eq, 2);
-                    default: return 0;
+                    default: return _keyword(Assign, 1); 
                 }
 			case '!' : if (text[pos + 1]=='=') return _keyword(Neq,2); return 0;
             default:
