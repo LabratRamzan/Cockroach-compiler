@@ -8,8 +8,6 @@
 #include <ctype.h>
 #include "tree.h"
 
-int _offset();
-
 enum comands{
 	POP,	//0
 	ADD,	//1
@@ -28,22 +26,35 @@ enum comands{
 	JMP_	//E
 };
 
-void Comp_expression(TreeNode* node,int c1, int c2);
+typedef struct
+{
+	char* Vars[256];
+	int offset;
+	int VarCount;
+	int comandCounter;
+	int nodeLevel;
+}InfoData_Comp;
 
-void Comp_if(TreeNode* node);
+int _offset();
 
-void Comp_ifelse(TreeNode* node);
+InfoData_Comp* InfoData_Comp_CR();
 
-void Comp_assigment(TreeNode* node);
+void* Compiler(TreeNode* tree,int* offset);
 
-void Comp_while(TreeNode* node);
+void* Comp_expression(TreeNode* node,int c1, int c2, InfoData_Comp* inf, void* byte_code);
 
-void Comp_print(TreeNode* node);
+void* Comp_if(TreeNode* node, InfoData_Comp* inf, void* byte_code);
 
-void Comp_statement(TreeNode* node);
+void* Comp_ifelse(TreeNode* node, InfoData_Comp* inf, void* byte_code);
 
-void Comp_statements(TreeNode* node);
+void* Comp_assigment(TreeNode* node, InfoData_Comp* inf, void* byte_code);
 
-void* Compiler(TreeNode* tree);
+void* Comp_while(TreeNode* node, InfoData_Comp* inf, void* byte_code);
+
+void* Comp_print(TreeNode* node, InfoData_Comp* inf, void* byte_code);
+
+void* Comp_statement(TreeNode* node, InfoData_Comp* inf, void* byte_code);
+
+void* Comp_statements(TreeNode* node, InfoData_Comp* inf, void* byte_code);
 
 #endif

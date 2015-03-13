@@ -1,63 +1,68 @@
 #include "compiler.h"
 
-void *bc, *bc_temp;
-char* Vars[256];
-
-int offset=0;
-int VarCount=0;
-int comandCounter=0;
-int nodeLevel=0;
-
-void* Compiler(TreeNode* tree)
+InfoData_Comp* InfoData_Comp_CR()
 {
-	Comp_statements(tree);
-	return bc;
+	InfoData_Comp* info = (InfoData_Comp*)malloc(sizeof(InfoData_Comp));
+	info->comandCounter=0;
+	info->nodeLevel=0;
+	info->offset=0;
+	info->VarCount=0;
+	return info;
 }
 
-int _offset()
-{ return offset; }
+void* Compiler(TreeNode* tree, int* offset)
+{
+	void* byte_code = malloc(0);
+	InfoData_Comp* info = InfoData_Comp_CR();
+	byte_code=Comp_statements(tree, info, byte_code);
+	*offset=info->offset;
+	free(info);
+	return byte_code;
+}
 
-int checkVar(char* var)
+int checkVar(char* var, InfoData_Comp* inf, void* byte_code)
 {
 	int i,g; 
-	for (i=0; i<VarCount; i++)
+	for (i=0; i<inf->VarCount; i++)
 	{
-		if (!strcmp(var,Vars[i])) break;
+		if (!strcmp(var,inf->Vars[i])) break;
 	}
-	if (i<VarCount) return i;
-	Vars[VarCount]=var;
-	VarCount++;
+	if (i<inf->VarCount) return i;
+	inf->Vars[inf->VarCount]=var;
+	inf->VarCount++;
 	return i;
 }
 
-void setCodeB(enum comands com, char* t)
+void* setCodeB(enum comands com, char* t, InfoData_Comp* inf, void* byte_code)
 {
 	int v;
-	bc=realloc(bc,5+offset);
+	byte_code=realloc(byte_code,5+inf->offset);
 	v=com;
-	memcpy((char*)bc+offset,&v,1);
+	memcpy((char*)byte_code+inf->offset,&v,1);
 	if (isalpha(*t)) 
 	{
-		v=checkVar(t);
-		memcpy((char*)bc+1+offset,&v,4);
+		v=checkVar(t,inf,byte_code);
+		memcpy((char*)byte_code+1+inf->offset,&v,4);
 	}
 	else
 	{
 		v=atoi(t);
-		memcpy((char*)bc+1+offset,&v,4);
+		memcpy((char*)byte_code+1+inf->offset,&v,4);
 	}
-	offset+=5;
+	inf->offset+=5;
+	return byte_code;
 }
 
-void setCodeU(enum comands com)
+void* setCodeU(enum comands com, InfoData_Comp* inf, void* byte_code)
 {
 	int v=com;
-	bc=(char*)realloc(bc,1+offset);
-	memcpy((char*)bc+offset,(char*)&v,1);
-	offset++;
+	byte_code=(char*)realloc(byte_code,1+inf->offset);
+	memcpy((char*)byte_code+inf->offset,(char*)&v,1);
+	inf->offset++;
+	return byte_code;
 }
 
-void Comp_expression(TreeNode* node,int c1, int c2)
+void* Comp_expression(TreeNode* node,int c1, int c2, InfoData_Comp* inf, void* byte_code)
 {
 	int c1_flag=0;
 	int c2_flag=0;
@@ -68,174 +73,183 @@ void Comp_expression(TreeNode* node,int c1, int c2)
 
 	switch (node->nodeType)
 	{
-	case _number: comandCounter++; setCodeB(PUSH_,node->token->Text); return;
-	case _identf: comandCounter++; setCodeB(GETVAR_,node->token->Text); return;
+	case _number: (inf->comandCounter++); byte_code=setCodeB(PUSH_,node->token->Text,inf,byte_code);	 return byte_code; ;
+	case _identf: (inf->comandCounter++); byte_code=setCodeB(GETVAR_,node->token->Text,inf,byte_code); return byte_code;;
 	}
 
-	Comp_expression(node->branch1,node->nodeType,node->nodeType);
-	Comp_expression(node->branch2,node->nodeType,node->nodeType);
+	byte_code= Comp_expression(node->branch1,node->nodeType,node->nodeType, inf, byte_code);
+	byte_code= Comp_expression(node->branch2,node->nodeType,node->nodeType, inf, byte_code);
 
-	comandCounter++;
+	(inf->comandCounter)++;
 
 	switch (node->nodeType)
 	{
 	case _plus: 
 		{
 			if (c1_flag) goto mi; 
-pl:			setCodeU(ADD); break;
+pl:			byte_code= setCodeU(ADD,inf,byte_code); break;
 		}
 	case _minus: 
 		{
 			if (c1_flag) goto pl; 
-mi:			setCodeU(SUB); break;		
+mi:			byte_code= setCodeU(SUB,inf,byte_code); break;		
 		}
 	case _mul: 
 		{
 			if (c2_flag) goto di; 
-mu:			setCodeU(MUL); break;
+mu:			byte_code= setCodeU(MUL,inf,byte_code); break;
 		}
 	case _div: 
 		{
 			if (c2_flag) goto mu; 
-di:			setCodeU(DIV); break;
+di:			byte_code= setCodeU(DIV,inf,byte_code); break;
 		}
-	case _equal: setCodeU(SUB); break;
+	case _equal: byte_code= setCodeU(SUB,inf,byte_code); break;
 	case _lt: 
-	case _geq: setCodeU(LT); break; 
+	case _geq: byte_code= setCodeU(LT,inf,byte_code); break; 
 	case _gt: 
-	case _leq: setCodeU(GT); break;
+	case _leq: byte_code= setCodeU(GT,inf,byte_code); break;
 	}
+	return byte_code;
 }
 
-void Comp_if(TreeNode* node)
+void* Comp_if(TreeNode* node, InfoData_Comp* inf, void* byte_code)
 {
 	int temp1,temp=0;
 	
-	Comp_expression(node->branch1,0,0);
+	byte_code= Comp_expression(node->branch1,0,0,inf, byte_code);
 
-	temp=offset;
-	bc=realloc(bc,offset+5);
-	offset+=5;
+	temp=inf->offset;
+	byte_code=realloc(byte_code,inf->offset+5);
+	inf->offset+=5;
 	
-	comandCounter++;
-	Comp_statement(node->branch2);
+	inf->comandCounter++;
+	byte_code= Comp_statement(node->branch2,inf, byte_code);
 
 	switch (node->branch1->nodeType)
 	{
 	case _lt: 
 	case _gt: 
-	case _nequal: temp1=JNZ_; memcpy((char*)bc+temp,(char*)&temp1,1); break;
+	case _nequal: temp1=JNZ_; memcpy((char*)byte_code+temp,(char*)&temp1,1); break;
 	case _geq: 
 	case _leq: 
-	case _equal: temp1=JZ_; memcpy((char*)bc+temp,(char*)&temp1,1); break;
+	case _equal: temp1=JZ_; memcpy((char*)byte_code+temp,(char*)&temp1,1); break;
 	}
 	
-	comandCounter++;
+	inf->comandCounter++;
 	temp++;
-	memcpy((char*)bc+temp,&comandCounter,4);
-	comandCounter--;
+	memcpy((char*)byte_code+temp,&(inf->comandCounter),4);
+	inf->comandCounter--;
+
+	return byte_code;
 }
 
-void Comp_ifelse(TreeNode* node)
+void* Comp_ifelse(TreeNode* node, InfoData_Comp* inf, void* byte_code)
 {
 	int temp1,temp=0;
 
-	Comp_expression(node->branch1,0,0);
+	byte_code= Comp_expression(node->branch1,0,0,inf, byte_code);
 
-	temp=offset;
-	bc=realloc(bc,offset+5);
-	offset+=5;
+	temp=inf->offset;
+	byte_code=realloc(byte_code,inf->offset+5);
+	inf->offset+=5;
 
-	comandCounter++;
-	Comp_statement(node->branch2);
+	inf->comandCounter++;
+	byte_code= Comp_statement(node->branch2,inf, byte_code);
 
 	switch (node->branch1->nodeType)
 	{
 	case _lt: 
 	case _gt: 
-	case _equal: temp1=JNZ_; memcpy((char*)bc+temp,(char*)&temp1,1); break;
+	case _equal: temp1=JNZ_; memcpy((char*)byte_code+temp,(char*)&temp1,1); break;
 	case _geq: 
 	case _leq: 
-	case _nequal: temp1=JZ_; memcpy((char*)bc+temp,(char*)&temp1,1); break;
+	case _nequal: temp1=JZ_; memcpy((char*)byte_code+temp,(char*)&temp1,1); break;
 	}
 	
-	comandCounter+=2;
+	inf->comandCounter+=2;
 	temp++;
-	memcpy((char*)bc+temp,&comandCounter,4);
-	comandCounter-=2;
+	memcpy((char*)byte_code+temp,&(inf->comandCounter),4);
+	inf->comandCounter-=2;
 
-	temp=offset;
-	bc=realloc(bc,offset+5);
-	offset+=5;
+	temp=inf->offset;
+	byte_code=realloc(byte_code,inf->offset+5);
+	inf->offset+=5;
 
-	comandCounter++;
-	Comp_statement(node->branch3);
+	inf->comandCounter++;
+	byte_code= Comp_statement(node->branch3, inf, byte_code);
 	
-	comandCounter++;
+	inf->comandCounter++;
 	temp1=JMP_;
-	memcpy((char*)bc+temp,(char*)&temp1,1);
+	memcpy((char*)byte_code+temp,(char*)&temp1,1);
 	temp++;
-	memcpy((char*)bc+temp,&comandCounter,4);
-	comandCounter--;
+	memcpy((char*)byte_code+temp,&(inf->comandCounter),4);
+	inf->comandCounter--;
+	return byte_code;
 }
 
-void Comp_assigment(TreeNode* node)
+void* Comp_assigment(TreeNode* node,InfoData_Comp* inf, void* byte_code)
 {	
-	Comp_expression(node->branch2,0,0);
-	comandCounter++;
-	setCodeB(SETVAR_,node->branch1->token->Text);
+	byte_code= Comp_expression(node->branch2,0,0,inf, byte_code);
+	(inf->comandCounter)++;
+	byte_code= setCodeB(SETVAR_,node->branch1->token->Text,inf, byte_code);
+	return byte_code;
 }
 
-void Comp_while(TreeNode* node)
+void* Comp_while(TreeNode* node, InfoData_Comp* inf, void* byte_code)
 {	
 	int temp1,temp=0;
 	
-	comandCounter++;
-	temp=comandCounter;
-	Comp_if(node);
-	comandCounter--;
+	inf->comandCounter++;
+	temp=inf->comandCounter;
+	byte_code= Comp_if(node,inf, byte_code);
+	inf->comandCounter--;
 
-	comandCounter++;
+	inf->comandCounter++;
 	temp1=JMP_;
-	bc=realloc(bc,offset+5);
-	memcpy((char*)bc+offset,(char*)&temp1,1);
-	memcpy((char*)bc+1+offset,&temp,4);
-	offset+=5;
+	byte_code=realloc(byte_code,inf->offset+5);
+	memcpy((char*)byte_code+inf->offset,(char*)&temp1,1);
+	memcpy((char*)byte_code+1+inf->offset,&temp,4);
+	inf->offset+=5;
+	return byte_code;
 
 }
 
-void Comp_print(TreeNode* node)
+void* Comp_print(TreeNode* node, InfoData_Comp* inf, void* byte_code)
 {
-	Comp_expression(node->branch1,0,0);
-	comandCounter++;
-	setCodeU(PRINT);
+	byte_code= Comp_expression(node->branch1,0,0,inf, byte_code);
+	inf->comandCounter++;
+	byte_code= setCodeU(PRINT,inf, byte_code);
+	return byte_code;
 }
 
-void Comp_break(TreeNode* node)
+void* Comp_break(TreeNode* node, InfoData_Comp* inf, void* byte_code)
 {
 
 }
 
-void Comp_statement(TreeNode* node)
+void* Comp_statement(TreeNode* node,InfoData_Comp* inf, void* byte_code)
 {
 
 	switch (node->nodeType)
 	{
-	case _block: Comp_statements(node); break;
-	case _if: Comp_if(node); break;
-	case _ifelse: Comp_ifelse(node); break;
-	case _assigment:  Comp_assigment(node); break;
-	case _while: Comp_while(node); break;
-	case _print: Comp_print(node); break;
-	case _break: Comp_break(node); break;
+	case _block: byte_code= Comp_statements(node, inf, byte_code); break;
+	case _if: byte_code= Comp_if(node,inf, byte_code); break;
+	case _ifelse: byte_code= Comp_ifelse(node,inf, byte_code); break;
+	case _assigment:  byte_code= Comp_assigment(node, inf, byte_code); break;
+	case _while: byte_code= Comp_while(node,inf, byte_code); break;
+	case _print: byte_code= Comp_print(node,inf, byte_code); break;
+	case _break: byte_code= Comp_break(node,inf, byte_code); break;
 	}
+	return byte_code;
 }
 
-void Comp_statements(TreeNode* node)
+void* Comp_statements(TreeNode* node,InfoData_Comp* inf, void* byte_code)
 {
-	nodeLevel++;
-	if (node->branch1) Comp_statement(node->branch1);
-	if (node->branch2) Comp_statements(node->branch2);
-	nodeLevel--;
-	if(nodeLevel==0) setCodeU(HLT);
+	(inf->nodeLevel)++;
+	if (node->branch1) byte_code= Comp_statement(node->branch1, inf, byte_code);
+	if (node->branch2) byte_code= Comp_statements(node->branch2, inf, byte_code);
+	(inf->nodeLevel)--;
+	if(inf->nodeLevel==0) byte_code=setCodeU(HLT,inf, byte_code);
+	return byte_code;
 }
