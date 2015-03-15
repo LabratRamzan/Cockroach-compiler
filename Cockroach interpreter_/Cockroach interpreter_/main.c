@@ -24,4 +24,5 @@ main()
 {
 	void* code=getBCode();
 	Interpreter(code);
+	system("pause");
 }

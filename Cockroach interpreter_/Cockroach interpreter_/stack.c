@@ -1,17 +1,12 @@
 #include "stack.h"
 
-void Stack_Init()
+void Push(double d, Stack* st)
 {
-	Stack.size=0;
+        st->data[st->size++] = d;
 }
 
-void Push(int d)
+int Pop(Stack* st)
 {
-        Stack.data[Stack.size++] = d;
-}
-
-int Pop()
-{
-        Stack.size--;
-		return Stack.data[Stack.size];
+        st->size--;
+		return st->data[st->size];
 }

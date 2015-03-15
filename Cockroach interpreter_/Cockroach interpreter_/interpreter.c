@@ -1,93 +1,69 @@
 #include "interpreter.h"
 
-int comandCoounter;
-double regA, regB;
-void* instructions;
-char* ss;
-int size;
-int vars[VARMAX];
-comand comands[COMMAX];
-
-enum comands{
-	POP,	//0
-	ADD,	//1
-	SUB,	//2
-	MUL,	//3
-	DIV,	//4
-	PRINT,	//5
-	HLT,	//6
-	LT, // !LT = GEQ
-	GT, // !GT = LEQ
-	PUSH_,	//9
-	SETVAR_,//A
-	GETVAR_,//B
-	JZ_,	//C
-	JNZ_,	//D
-	JMP_	//E
-};
-
-int getVarOrNum()
+void Interpreter(void* a)
 {
-	return comands[comandCoounter].arg;
+	Info_Interp* info = (Info_Interp*)malloc(sizeof(Info_Interp));
+	info->instructions=a;
+	SaveInctructions(info);
+	Execution(info);
 }
 
-void SaveInctructions()
+int getVarOrNum(Info_Interp* info)
 {
-	int i=1;
+	return info->comands[info->comandCoounter].arg;
+}
+
+void SaveInctructions(Info_Interp* info)
+{
+	unsigned long i=1;
 	comand* com;
 	com=(comand*)malloc(8);
 	while(1)
 	{
 		com->comand=0;
-		memcpy(&(com->comand),instructions,1);
-		instructions=(char*)instructions+1;
+		memcpy(&(com->comand),info->instructions,1);
+		info->instructions=(char*)info->instructions+1;
 		if (com->comand>8) 
 		{
-			memcpy(&(com->arg),instructions,4);
-			instructions=(char*)instructions+4;
+			memcpy(&(com->arg),info->instructions,4);
+			info->instructions=(char*)info->instructions+4;
 		}
-		comands[i]=*com;
+		info->comands[i]=*com;
 		i++;
 		if(com->comand==HLT) break;
 	}
 }
 
-void Interpreter(void* a)
+void Execution(Info_Interp* info)
 {
-	instructions=a;
-	ss=(char*)a;
-	SaveInctructions();
-	Execution();
-}
-
-void Execution()
-{
+	double regA, regB;
+	Stack* st =(Stack*)malloc(sizeof(Stack));
 	int com=0;
 	int v=0;
-	Stack_Init();
-	comandCoounter=1;
+	st->size=0;
+	info->comandCoounter=1;
 	while (1)
 	{
-		com=comands[comandCoounter].comand;
-		v=getVarOrNum();
-		comandCoounter++;
+		com=info->comands[info->comandCoounter].comand;
+		v=getVarOrNum(info);
+		info->comandCoounter++;
 		switch (com)
 		{
-		case POP: Pop();
-		case ADD: regA=Pop(); regB=Pop(); regB+=regA; Push(regB); break;
-		case SUB: regA=Pop(); regB=Pop(); regB-=regA; Push(regB); break;
-		case MUL: regA=Pop(); regB=Pop(); regB*=regA; Push(regB); break;
-		case DIV: regA=Pop(); regB=Pop(); regB/=regA; Push(regB); break;
-		case PRINT: printf("%d\n",Pop()); break;
+		case POP: Pop(st);
+		case ADD: regA=Pop(st); regB=Pop(st); regB+=regA; Push(regB,st); break;
+		case SUB: regA=Pop(st); regB=Pop(st); regB-=regA; Push(regB,st); break;
+		case MUL: regA=Pop(st); regB=Pop(st); regB*=regA; Push(regB,st); break;
+		case DIV: regA=Pop(st); regB=Pop(st); regB/=regA; Push(regB,st); break;
+		case PRINT: printf("%d\n",Pop(st)); break;
 		case HLT: return;
-		case LT: regA=Pop(); regB=Pop(); regA=regB<regA; Push(regA); break;
-		case GT: regA=Pop(); regB=Pop(); regA=regB>regA; Push(regA); break;
-		case PUSH_: Push(v); break;
-		case SETVAR_: vars[v]=Pop(); break;
-		case GETVAR_: Push(vars[v]); break;
-		case JZ_: if (Pop()==1) comandCoounter=v; break;
-		case JNZ_: if (Pop()==0) comandCoounter=v; break;
-		case JMP_: comandCoounter=v; break;
+		case LT: regA=Pop(st); regB=Pop(st); regA=regB<regA; Push(regA,st); break;
+		case GT: regA=Pop(st); regB=Pop(st); regA=regB>regA; Push(regA,st); break;
+		case PUSH_: Push(v,st); break;
+		case SETVAR_: info->vars[v]=Pop(st); break;
+		case GETVAR_: Push(info->vars[v],st); break;
+		case JZ_: if (Pop(st)!=0) info->comandCoounter=v; break;
+		case JNZ_: if (Pop(st)==0) info->comandCoounter=v; break;
+		case JMP_: info->comandCoounter=v; break;
 		} 
 		
 

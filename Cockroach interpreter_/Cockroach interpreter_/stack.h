@@ -1,12 +1,10 @@
 #define STACK_MAX 256
 
-struct {
+typedef struct {
 	int	data[STACK_MAX];
-    int size;
+    unsigned long size;
 }Stack;
 
-void Stack_Init();
+void Push(double d, Stack* st);
 
-void Push(int d);
-
-int Pop();
+int Pop(Stack* st);

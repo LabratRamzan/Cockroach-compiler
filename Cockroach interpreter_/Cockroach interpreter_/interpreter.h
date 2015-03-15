@@ -6,15 +6,41 @@
 #include <stdio.h>
 #include "stack.h"
 
+enum comands{
+	POP,	//0
+	ADD,	//1
+	SUB,	//2
+	MUL,	//3
+	DIV,	//4
+	PRINT,	//5
+	HLT,	//6
+	LT, // !LT = GEQ
+	GT, // !GT = LEQ
+	PUSH_,	//9
+	SETVAR_,//A
+	GETVAR_,//B
+	JZ_,	//C
+	JNZ_,	//D
+	JMP_	//E
+};
+
 typedef struct{
 	int comand;
 	int arg;
 }comand;
 
-int getVarOrNum();
+typedef struct{
+	void* instructions;
+	unsigned long comandCoounter;
+	unsigned long size;
+	int vars[VARMAX];
+	comand comands[COMMAX];
+}Info_Interp;
 
-void SaveInctructions();
+int getVarOrNum(Info_Interp* info);
+
+void SaveInctructions(Info_Interp* info);
 
 void Interpreter(void* a);
 
-void Execution();
+void Execution(Info_Interp* info);
