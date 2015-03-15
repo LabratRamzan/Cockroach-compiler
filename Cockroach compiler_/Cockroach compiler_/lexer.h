@@ -8,22 +8,25 @@
 #include "token.h"
 #include "linked_list.h"
 
+
+typedef struct{
 	char* text;
-	static int pos=0;
+	unsigned long pos;
+}Info_Lexer;
 
-	void InitText(char* program);
+	void InitText(char* program, Info_Lexer* info);
 
-	node* getTokens();
+	node* getTokens(Info_Lexer* info);
 
-	int _expectSeparator(int offset);
+	int _expectSeparator(unsigned long offset, Info_Lexer* info);
 
-	int _expectWord(char* str);
+	int _expectWord(char* str, Info_Lexer* info);
 
-	int _eof();
+	int _eof(Info_Lexer* info);
 
-	Token* _ident();
+	Token* _ident(Info_Lexer* info);
 
-	Token* _next();
+	Token* _next(Info_Lexer* info);
 
 	Token** listToMassiv(node* nod);
 

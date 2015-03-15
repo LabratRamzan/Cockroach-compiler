@@ -161,10 +161,10 @@ void* Comp_ifelse(TreeNode* node, InfoData_Comp* inf, void* byte_code)
 	{
 	case _lt: 
 	case _gt: 
-	case _equal: temp1=JNZ_; memcpy((char*)byte_code+temp,(char*)&temp1,1); break;
+	case _nequal: temp1=JNZ_; memcpy((char*)byte_code+temp,(char*)&temp1,1); break;
 	case _geq: 
 	case _leq: 
-	case _nequal: temp1=JZ_; memcpy((char*)byte_code+temp,(char*)&temp1,1); break;
+	case _equal: temp1=JZ_; memcpy((char*)byte_code+temp,(char*)&temp1,1); break;
 	}
 	
 	inf->comandCounter+=2;

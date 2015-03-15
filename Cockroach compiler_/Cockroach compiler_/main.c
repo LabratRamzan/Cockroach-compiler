@@ -40,16 +40,14 @@ char* getProgram()
 	return program;
 }
 
-void saveBCode(void* c)
+void saveBCode(void* c,int offset)
 {
 	FILE* fp;
-	int offset;
 	char code[256];
 
 	printf("Record bytecode, file name: \n");
 	scanf("%s",code);
 
-	offset=_offset();
 	fp=fopen(code, "wb");
 	fwrite(c,1,offset,fp);
 	fclose(fp);
@@ -60,8 +58,9 @@ main()
 	node *TokenList;
 	Token** TokenMassiv;
 	TreeNode* tree;
-	void* bcc;
+	void* bc;
     char* program;
+	unsigned long offset=0;
 	
 	program=getProgram();
 
@@ -72,7 +71,8 @@ main()
 	tree = Parser(TokenMassiv);
 
 	TComp_statements(tree);
-	bcc=Compiler(tree);
-
-	saveBCode(bcc);
+	bc=Compiler(tree, &offset);
+	
+	saveBCode(bc,offset);
+	system("pause");
 }

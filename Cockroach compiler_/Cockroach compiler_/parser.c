@@ -1,33 +1,37 @@
 #include "parser.h"
 
-int _position=0;
 
 TreeNode* Parser(Token** toks)
 {
-	tokens=toks;
-	return ParseStatements();
+	TreeNode* node;
+	Info_Parser* info = (Info_Parser*)malloc(sizeof(Info_Parser));
+	info->tokens=toks;
+	info->pos=0;
+	node= ParseStatements(info);
+	free(info);
+	return node;
 }
 
-Token* _expectedToken(enum TokenType type)
+Token* _expectedToken(enum TokenType type, Info_Parser* info)
 {
-	if ( type == tokens[_position]->Type )
-		return tokens[_position];
+	if ( type == info->tokens[info->pos]->Type )
+		return info->tokens[info->pos];
 	return 0;
 }
 
-Token* _acceptToken(enum TokenType type)
+Token* _acceptToken(enum TokenType type, Info_Parser* info)
 {
-	Token* token = _expectedToken(type);
-	if (token != 0) _position++;
+	Token* token = _expectedToken(type,info);
+	if (token != 0) info->pos++;
 	return token;
 }
 
-int _checkToken(enum TokenType type)
+int _checkToken(enum TokenType type, Info_Parser* info)
 {
-	Token* token = _expectedToken(type);
+	Token* token = _expectedToken(type, info);
 	if (token != 0)
 	{
-		_position++;
+		info->pos++;
 		return 1;
 	}
 	return 0;
@@ -51,10 +55,10 @@ void set_next_nodes(TreeNode* node, TreeNode* br1,TreeNode* br2,TreeNode* br3)
 	node->branch3=br3;
 }
 
-TreeNode* ParseIdentifier()
+TreeNode* ParseIdentifier(Info_Parser* info)
 {
 	TreeNode *identf;
-	Token* ident = _acceptToken(Ident);
+	Token* ident = _acceptToken(Ident, info);
 	if (ident==0) return 0;
 	identf=(TreeNode*)malloc(sizeof(TreeNode));
 	identf->nodeType=_identf;
@@ -62,10 +66,10 @@ TreeNode* ParseIdentifier()
 	return identf;
 }
 
-TreeNode* ParseNumber()
+TreeNode* ParseNumber(Info_Parser* info)
 {
 	TreeNode *numb;
-	Token* num = _acceptToken(Number);
+	Token* num = _acceptToken(Number,info);
 	if (num) 
 	{
 		numb=(TreeNode*)malloc(sizeof(TreeNode));
@@ -76,14 +80,14 @@ TreeNode* ParseNumber()
 	return 0;
 }
 
-TreeNode* ParsePrint()
+TreeNode* ParsePrint(Info_Parser* info)
 {
 	TreeNode *expr, *print;
 	print=(TreeNode*)malloc(sizeof(TreeNode));
 	expr=(TreeNode*)malloc(sizeof(TreeNode));
 	expr->nodeType=_expression;
-	if (_checkToken(Print) && _checkToken(Lpar) &&
-		_setNcheck(expr , ParseExpression()) && _checkToken(Rpar) ) 
+	if (_checkToken(Print, info) && _checkToken(Lpar, info) &&
+		_setNcheck(expr , ParseExpression(info)) && _checkToken(Rpar, info) ) 
 	{
 		print->nodeType=_print;
 		set_next_nodes(print,expr,0,0);
@@ -94,15 +98,15 @@ TreeNode* ParsePrint()
 	return 0;
 }
 
-TreeNode* ParseAssigment()
+TreeNode* ParseAssigment(Info_Parser* info)
 {
 	TreeNode *left_ident, *right_expr, *assig;
 	left_ident=(TreeNode*)malloc(sizeof(TreeNode));
 	right_expr=(TreeNode*)malloc(sizeof(TreeNode));
 	left_ident->nodeType=_identf;
 	right_expr->nodeType=_expression;
-	if (_setNcheck(left_ident, ParseIdentifier()) && _checkToken(Assign) &&
-		_setNcheck(right_expr, ParseExpression()) )
+	if (_setNcheck(left_ident, ParseIdentifier(info)) && _checkToken(Assign,info) &&
+		_setNcheck(right_expr, ParseExpression(info)) )
 	{
 		assig=(TreeNode*)malloc(sizeof(TreeNode));
 		assig->nodeType=_assigment;
@@ -116,11 +120,11 @@ TreeNode* ParseAssigment()
 	
 }
 
-TreeNode* ParseBreak()
+TreeNode* ParseBreak(Info_Parser* info)
 {
 	TreeNode* brek;
 
-	if (_checkToken(Break))
+	if (_checkToken(Break, info))
 	{
 		brek=(TreeNode*)malloc(sizeof(TreeNode));
 		brek->nodeType=_break;
@@ -130,40 +134,40 @@ TreeNode* ParseBreak()
 	return 0;
 }
 
-TreeNode* ParseIfElse()
+TreeNode* ParseIfElse(Info_Parser* info)
 {
 	TreeNode *iff, *cond, *ye, *no;
-	int save_pos=_position;
+	unsigned long save_pos=info->pos;
 	cond=(TreeNode*)malloc(sizeof(TreeNode));
 	ye=(TreeNode*)malloc(sizeof(TreeNode));
 	no=(TreeNode*)malloc(sizeof(TreeNode));
 	cond->nodeType=_expression;
-	if ( _checkToken(If) && _checkToken(Lpar) &&
-		_setNcheck(cond, ParseExpression()) && _checkToken(Rpar) &&
-		_setNcheck(ye, ParseStatement()) && _checkToken(Else) &&
-		_setNcheck(no, ParseStatement()) )
+	if ( _checkToken(If,info) && _checkToken(Lpar,info) &&
+		_setNcheck(cond, ParseExpression(info)) && _checkToken(Rpar,info) &&
+		_setNcheck(ye, ParseStatement(info)) && _checkToken(Else,info) &&
+		_setNcheck(no, ParseStatement(info)) )
 	{
 		iff=(TreeNode*)malloc(sizeof(TreeNode));
 		iff->nodeType=_ifelse;
 		set_next_nodes(iff,cond,ye,no);
 		return iff;
 	}
-	_position=save_pos;
+	info->pos=save_pos;
 	free(cond);
 	free(ye);
 	free(no);
 	return 0;
 }
 
-TreeNode* ParseIf()
+TreeNode* ParseIf(Info_Parser* info)
 {
 	TreeNode *iff, *cond, *ye;
 	cond=(TreeNode*)malloc(sizeof(TreeNode));
 	ye=(TreeNode*)malloc(sizeof(TreeNode));
 	cond->nodeType=_expression;
-	if ( _checkToken(If) && _checkToken(Lpar) &&
-		_setNcheck(cond, ParseExpression()) && _checkToken(Rpar) &&
-		_setNcheck(ye, ParseStatement()) )
+	if ( _checkToken(If,info) && _checkToken(Lpar,info) &&
+		_setNcheck(cond, ParseExpression(info)) && _checkToken(Rpar,info) &&
+		_setNcheck(ye, ParseStatement(info)) )
 	{
 		iff=(TreeNode*)malloc(sizeof(TreeNode));
 		iff->nodeType=_if;
@@ -175,14 +179,14 @@ TreeNode* ParseIf()
 	return 0;
 }
 
-TreeNode* ParseWhile()
+TreeNode* ParseWhile(Info_Parser* info)
 {
 	TreeNode *whil, *cond, *body;
 	cond=(TreeNode*)malloc(sizeof(TreeNode));
 	body=(TreeNode*)malloc(sizeof(TreeNode));
-	if  (_checkToken(While) && _checkToken(Lpar) &&
-		_setNcheck(cond, ParseExpression()) && _checkToken(Rpar) &&
-		_setNcheck(body, ParseStatement()) )
+	if  (_checkToken(While,info) && _checkToken(Lpar,info) &&
+		_setNcheck(cond, ParseExpression(info)) && _checkToken(Rpar,info) &&
+		_setNcheck(body, ParseStatement(info)) )
 	{
 		whil=(TreeNode*)malloc(sizeof(TreeNode));
 		whil->nodeType=_while;
@@ -194,15 +198,15 @@ TreeNode* ParseWhile()
 	return 0;
 }
 
-TreeNode* ParseExpression()
+TreeNode* ParseExpression(Info_Parser* info)
 {
 	TreeNode *left, *right, *expr;
-	left=ParseExpression0();
+	left=ParseExpression0(info);
 	right=(TreeNode*)malloc(sizeof(TreeNode));
 	
 	if (left==0) return 0;
 
-	if (_checkToken(Lt) && _setNcheck(right,ParseExpression()) )
+	if (_checkToken(Lt,info) && _setNcheck(right,ParseExpression(info)) )
 	{
 		expr=(TreeNode*)malloc(sizeof(TreeNode));
 		expr->nodeType=_lt;
@@ -210,7 +214,7 @@ TreeNode* ParseExpression()
 		return expr;
 	}
 
-	if (_checkToken(Leq) && _setNcheck(right,ParseExpression()) )
+	if (_checkToken(Leq,info) && _setNcheck(right,ParseExpression(info)) )
 	{
 		expr=(TreeNode*)malloc(sizeof(TreeNode));
 		expr->nodeType=_leq;
@@ -218,7 +222,7 @@ TreeNode* ParseExpression()
 		return expr;
 	}
 
-	if (_checkToken(Gt) && _setNcheck(right,ParseExpression()) )
+	if (_checkToken(Gt,info) && _setNcheck(right,ParseExpression(info)) )
 	{
 		expr=(TreeNode*)malloc(sizeof(TreeNode));
 		expr->nodeType=_gt;
@@ -226,7 +230,7 @@ TreeNode* ParseExpression()
 		return expr;
 	}
 
-	if (_checkToken(Geq) && _setNcheck(right,ParseExpression()) )
+	if (_checkToken(Geq,info) && _setNcheck(right,ParseExpression(info)) )
 	{
 		expr=(TreeNode*)malloc(sizeof(TreeNode));
 		expr->nodeType=_geq;
@@ -234,7 +238,7 @@ TreeNode* ParseExpression()
 		return expr;
 	}
 
-	if (_checkToken(Eq) && _setNcheck(right,ParseExpression()) )
+	if (_checkToken(Eq,info) && _setNcheck(right,ParseExpression(info)) )
 	{
 		expr=(TreeNode*)malloc(sizeof(TreeNode));
 		expr->nodeType=_equal;
@@ -242,7 +246,7 @@ TreeNode* ParseExpression()
 		return expr;
 	}
 
-	if (_checkToken(Neq) && _setNcheck(right,ParseExpression()) )
+	if (_checkToken(Neq,info) && _setNcheck(right,ParseExpression(info)) )
 	{
 		expr=(TreeNode*)malloc(sizeof(TreeNode));
 		expr->nodeType=_nequal;
@@ -253,13 +257,13 @@ TreeNode* ParseExpression()
 	return left;
 }
 
-TreeNode* ParseExpression0()
+TreeNode* ParseExpression0(Info_Parser* info)
 {
 	TreeNode *left, *right, *op;
-	left = ParseExpression1();
+	left = ParseExpression1(info);
 	right=(TreeNode*)malloc(sizeof(TreeNode));
 
-	if (_checkToken(Plus) && _setNcheck(right,ParseExpression0()))
+	if (_checkToken(Plus,info) && _setNcheck(right,ParseExpression0(info)))
 	{
 		op=(TreeNode*)malloc(sizeof(TreeNode));
 		op->nodeType=_plus;
@@ -267,7 +271,7 @@ TreeNode* ParseExpression0()
 		return op;
 	}
 
-	if (_checkToken(Minus) && _setNcheck(right,ParseExpression0()))
+	if (_checkToken(Minus,info) && _setNcheck(right,ParseExpression0(info)))
 	{
 		op=(TreeNode*)malloc(sizeof(TreeNode));
 		op->nodeType=_minus;
@@ -278,14 +282,14 @@ TreeNode* ParseExpression0()
 	return left;
 }
 
-TreeNode* ParseExpression1()
+TreeNode* ParseExpression1(Info_Parser* info)
 {
 	TreeNode *left,*right,*op;
-	left=ParseAtom();
+	left=ParseAtom(info);
 	right=(TreeNode*)malloc(sizeof(TreeNode));
 
 
-	if (_checkToken(Mul) && _setNcheck(right,ParseExpression1()))
+	if (_checkToken(Mul,info) && _setNcheck(right,ParseExpression1(info)))
 	{
 		op=(TreeNode*)malloc(sizeof(TreeNode));
 		op->nodeType=_mul;
@@ -293,7 +297,7 @@ TreeNode* ParseExpression1()
 		return op;
 	}
 
-	if (_checkToken(Div) && _setNcheck(right,ParseExpression1()))
+	if (_checkToken(Div,info) && _setNcheck(right,ParseExpression1(info)))
 	{
 		op=(TreeNode*)malloc(sizeof(TreeNode));
 		op->nodeType=_div;
@@ -304,40 +308,40 @@ TreeNode* ParseExpression1()
 	return left;
 }
 
-TreeNode* ParseAtom()
+TreeNode* ParseAtom(Info_Parser* info)
 {
 	TreeNode *inBr, *pr;
 	inBr=(TreeNode*)malloc(sizeof(TreeNode));
-	if( _checkToken(Lbrace) && _setNcheck(inBr,ParseExpression()) &&
-		_checkToken(Rbrace) )
+	if( _checkToken(Lbrace,info) && _setNcheck(inBr,ParseExpression(info)) &&
+		_checkToken(Rbrace,info) )
 	{
 		return inBr;
 	}
 	free(inBr);
-	pr=ParseNumber();
-	if (pr==0) return ParseIdentifier();
+	pr=ParseNumber(info);
+	if (pr==0) return ParseIdentifier(info);
 	else return pr;
 }
 
-TreeNode* ParseStatement()
+TreeNode* ParseStatement(Info_Parser* info)
 {
 	TreeNode* statement, *temp, *in;
 	statement=(TreeNode*)malloc(sizeof(TreeNode));
 	in=(TreeNode*)malloc(sizeof(TreeNode));
 	temp=statement;
-	if ( _checkToken(Lbrace) && _setNcheck(statement, ParseStatements()) && _checkToken(Rbrace) )
+	if ( _checkToken(Lbrace,info) && _setNcheck(statement, ParseStatements(info)) && _checkToken(Rbrace,info) )
 	{
 		statement->nodeType=_block;
 		statement->token=0;
 		//set_next_nodes(statement,in,0,0);
 		return statement;
 	}
-	statement = ParseAssigment(); if (statement) return statement;
-	statement = ParseIfElse(); if (statement) return statement;
-	statement = ParseIf(); if (statement) return statement;
-	statement = ParseWhile(); if (statement) return statement;
-	statement = ParsePrint(); if (statement) return statement;
-	if (_checkToken(Break)) 
+	statement = ParseAssigment(info); if (statement) return statement;
+	statement = ParseIfElse(info); if (statement) return statement;
+	statement = ParseIf(info); if (statement) return statement;
+	statement = ParseWhile(info); if (statement) return statement;
+	statement = ParsePrint(info); if (statement) return statement;
+	if (_checkToken(Break,info)) 
 	{
 		statement=temp;
 		statement->nodeType=_break;
@@ -347,7 +351,7 @@ TreeNode* ParseStatement()
 
 }
 
-TreeNode* ParseStatements()
+TreeNode* ParseStatements(Info_Parser* info)
 {
 	TreeNode *left, *right, *node;
 	left=(TreeNode*)malloc(sizeof(TreeNode));
@@ -357,9 +361,9 @@ TreeNode* ParseStatements()
 	node->nodeType=_node;
 	node->token=0;
 	
-	left = ParseStatement();
+	left = ParseStatement(info);
 	if (left == 0) return 0;
-	if ( _checkToken(Semicolon) && _setNcheck(right, ParseStatements()) )
+	if ( _checkToken(Semicolon,info) && _setNcheck(right, ParseStatements(info)) )
 	{
 		set_next_nodes(node,left,right,0);
 		return node;

@@ -35,9 +35,9 @@ enum TokenType
 
 typedef struct {
 	char* Text;
-	int From, To;
+	unsigned long From, To;
 	enum TokenType Type;
 } Token;
 
-Token Token_CR( enum TokenType type, char* text, int from, int to);
+Token Token_CR( enum TokenType type, char* text, unsigned long from, unsigned long to);
 #endif

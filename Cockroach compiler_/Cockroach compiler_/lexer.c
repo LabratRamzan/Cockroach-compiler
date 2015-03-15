@@ -1,124 +1,124 @@
 #include "lexer.h"
 
-	void InitText(char* program)
+void InitText(char* program, Info_Lexer* info)
 	{
-		int len = strlen(program);
-		text=strcat( strcpy((char*)malloc(sizeof(char)*(len+1)) , program) , "$");
+		unsigned long len = strlen(program);
+		info->text=strcat( strcpy((char*)malloc(sizeof(char)*(len+1)) , program) , "$");
 	}
 
-	node* getTokens()
+	node* getTokens(Info_Lexer* info)
     {
 		Token* token;
         node* nod;
 		nod = (node *)malloc(sizeof(node));
-		token = _next();
+		token = _next(info);
 		if (token==0) return 0;
 		nod->data=*token;
 		nod->next=0;
-        for ( token = _next() ; token != 0; token = _next() )
+        for ( token = _next(info) ; token != 0; token = _next(info) )
 			add_token(nod, *token);
 		return nod;
     }
 
-	int _expectSeparator(int offset)
+	int _expectSeparator(unsigned long offset, Info_Lexer* info)
 	{
-		if ( isalnum(text[pos+offset]) || text[pos+offset]=='_') return 0;
+		if ( isalnum(info->text[info->pos+offset]) || info->text[info->pos+offset]=='_') return 0;
 		return 1;
 	}
 
-	int _expectWord(char* str)
+	int _expectWord(char* str,Info_Lexer* info)
 	{
-		if ( !(strncmp(text+pos,str,strlen(str))) && _expectSeparator(strlen(str)) ) return 1;
+		if ( !(strncmp(info->text+info->pos,str,strlen(str))) && _expectSeparator(strlen(str),info) ) return 1;
 		return 0;
 	}
 
-	int _eof()
+	int _eof(Info_Lexer* info)
 	{
-		return pos>=strlen(text);
+		return info->pos>=strlen(info->text);
 	}
 
-	Token* _ident()
+	Token* _ident(Info_Lexer* info)
 	{
-		int end=pos;
-		if ( isalpha(text[end]) || text[end]=='_' ) end++;
-		while ( isalnum(text[end]) || text[end] == '_') end++;
-		if (end != pos)
+		unsigned long end=info->pos;
+		if ( isalpha(info->text[end]) || info->text[end]=='_' ) end++;
+		while ( isalnum(info->text[end]) || info->text[end] == '_') end++;
+		if (end != info->pos)
 		{
-			Token result = Token_CR(Ident, text, pos, end);
-			pos = end;
+			Token result = Token_CR(Ident, info->text, info->pos, end);
+			info->pos = end;
 			return &result;
 		}
 		else return 0;
 	}
 
-	Token* _keyword( enum TokenType type, int size)
+	Token* _keyword( enum TokenType type, unsigned long size, Info_Lexer* info)
 	{
-		Token result = Token_CR(type, text, pos, pos + size);
-		pos = pos + size;
+		Token result = Token_CR(type, info->text, info->pos, info->pos + size);
+		info->pos = info->pos + size;
 		return &result;
 	}
 
-	Token* _number()
+	Token* _number(Info_Lexer* info)
 	{
 		Token result;
-		int start = pos;
-		while ( isdigit(text[pos]) ) pos++;
-		result = Token_CR(Number, text, start, pos);
-		if ( pos != start ) return &result;
+		unsigned long start = info->pos;
+		while ( isdigit(info->text[info->pos]) ) info->pos++;
+		result = Token_CR(Number, info->text, start, info->pos);
+		if ( info->pos != start ) return &result;
 		else return 0;
 	}
 
-	Token* _next()
+	Token* _next(Info_Lexer* info)
 	{
 		Token* ident;
 		Token* num;
 
-		if (_eof()) return 0;
-		while ( (pos < strlen(text)) && isspace(text[pos]) ) pos++;
-		if (_eof()) return 0;
+		if (_eof(info)) return 0;
+		while ( (info->pos < strlen(info->text)) && isspace(info->text[info->pos]) ) info->pos++;
+		if (_eof(info)) return 0;
 			
-		switch (text[pos])
+		switch (info->text[info->pos])
 		{
-			case '$': return _keyword(_EOF, 1);
-            case ';': return _keyword(Semicolon, 1);
-			case '*': return _keyword(Mul, 1);
-            case '/': return _keyword(Div, 1);
-            case '-': return _keyword(Minus, 1);
-            case '+': return _keyword(Plus, 1);
-            case '(': return _keyword(Lpar, 1);
-            case ')': return _keyword(Rpar, 1);
-            case '{': return _keyword(Lbrace, 1);
-            case '}': return _keyword(Rbrace, 1);
-            case '<': switch (text[pos + 1])
+			case '$': return _keyword(_EOF, 1,info);
+            case ';': return _keyword(Semicolon, 1, info);
+			case '*': return _keyword(Mul, 1, info);
+            case '/': return _keyword(Div, 1, info);
+            case '-': return _keyword(Minus, 1, info);
+            case '+': return _keyword(Plus, 1, info);
+            case '(': return _keyword(Lpar, 1, info);
+            case ')': return _keyword(Rpar, 1, info);
+            case '{': return _keyword(Lbrace, 1, info);
+            case '}': return _keyword(Rbrace, 1, info);
+            case '<': switch (info->text[info->pos + 1])
 							{
-                    case '=': return _keyword(Leq, 2);
-                    default: return _keyword(Lt, 1); 
+                    case '=': return _keyword(Leq, 2, info);
+                    default: return _keyword(Lt, 1, info); 
                 }
-            case '>': switch (text[pos + 1])
+            case '>': switch (info->text[info->pos + 1])
                 {
-                    case '=': return _keyword(Geq, 2);
-                    default: return _keyword(Gt, 1);
+                    case '=': return _keyword(Geq, 2, info);
+                    default: return _keyword(Gt, 1, info);
                 }
-            case '=': switch (text[pos + 1])
+            case '=': switch (info->text[info->pos + 1])
                 {
-                    case '=': return _keyword(Eq, 2);
-                    default: return _keyword(Assign, 1); 
+                    case '=': return _keyword(Eq, 2, info);
+                    default: return _keyword(Assign, 1, info); 
                 }
-			case '!' : if (text[pos + 1]=='=') return _keyword(Neq,2); return 0;
+			case '!' : if (info->text[info->pos + 1]=='=') return _keyword(Neq,2, info); return 0;
             default:
-                if (_expectWord("if"))
-                    return _keyword(If, 2);
-                if (_expectWord("else"))
-                    return _keyword(Else, 4);
-                if (_expectWord("break"))
-                    return _keyword(Break, 5);
-                if (_expectWord("while"))
-                    return _keyword(While, 5);
-                if (_expectWord("print"))
-                    return _keyword(Print, 5);
-                num = _number();
+                if (_expectWord("if", info))
+                    return _keyword(If, 2, info);
+                if (_expectWord("else", info))
+                    return _keyword(Else, 4, info);
+                if (_expectWord("break", info))
+                    return _keyword(Break, 5, info);
+                if (_expectWord("while", info))
+                    return _keyword(While, 5, info);
+                if (_expectWord("print", info))
+                    return _keyword(Print, 5, info);
+                num = _number(info);
 				if (num != 0) return num;
-                ident = _ident();
+                ident = _ident(info);
 				if (ident != 0) return ident;
                 return 0;
 		}
@@ -126,7 +126,7 @@
 
 	Token** listToMassiv(node* nod)
 {
-	int cnt,i;
+	unsigned long i;
 	Token** tok;
 	node* tmp=nod;
 	i=0;
@@ -140,15 +140,21 @@
 	return tok;
 }
 
-	void _setTokenName(Token** mas)
+	void _setTokenName(Token** mas,Info_Lexer* info)
 	{
-		int len;
+		unsigned long len;
 		while (1)
 		{
 			len = (*mas)->To - (*mas)->From;
-			(*mas)->Text = (char*)malloc( sizeof(char)*(len+1));
-			memcpy((*mas)->Text, &text[(*mas)->From],len );
+			printf("%s | %d %d",info->text,(*mas)->From,(*mas)->To);
+			(*mas)->Text = (char*)malloc(len+1);
+			printf("%s | %d\n",(*mas)->Text, (*mas)->Text);
+			//memcpy((*mas)->Text, info->text+(*mas)->From,len );
+			for(len=0; (len+(*mas)->From) < (*mas)->To ;len++)
+				(*mas)->Text[len]=info->text[(*mas)->From+len];
+			printf("%s | %d\n",(*mas)->Text, (*mas)->Text);
 			(*mas)->Text[len]='\0';
+			printf("%s | %d\n",(*mas)->Text, (*mas)->Text);
 			if ( (*mas)->Type == _EOF ) break; 
 			mas++;
 		}
@@ -156,11 +162,14 @@
 
 	node* Lexer(char* program)
 	{
+		Token** mass;
 		node* tokList;
-		Token** tokMas;
-		InitText(program);
-		tokList = getTokens();
-		tokMas = listToMassiv(tokList);
-		_setTokenName(tokMas);
+		Info_Lexer *info = (Info_Lexer*)malloc(sizeof(Info_Lexer));
+		info->pos=0;
+		InitText(program,info);
+		tokList = getTokens(info);
+		mass = listToMassiv(tokList);
+		_setTokenName(mass, info);
+		free(info);
 		return tokList;
 	}

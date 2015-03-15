@@ -65,8 +65,8 @@ void TComp_if(TreeNode* node)
 	printf("%d)",cc);
 	switch (node->branch1->nodeType)
 	{
-	case _nequal: printf("JZ CC + BLOCK_LEN\n"); break;
-	case _equal: printf("JNZ CC + BLOCK_LEN\n"); break;
+	case _nequal: printf("JNZ CC + BLOCK_LEN\n"); break;
+	case _equal: printf("JZ CC + BLOCK_LEN\n"); break;
 	case _lt: 
 	case _gt: printf("JNZ CC + BLOCK_LEN\n"); break;
 	case _geq: 

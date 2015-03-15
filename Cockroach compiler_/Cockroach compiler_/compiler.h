@@ -39,7 +39,7 @@ int _offset();
 
 InfoData_Comp* InfoData_Comp_CR();
 
-void* Compiler(TreeNode* tree,int* offset);
+void* Compiler(TreeNode* tree,unsigned long*  offset);
 
 void* Comp_expression(TreeNode* node,int c1, int c2, InfoData_Comp* inf, void* byte_code);
 

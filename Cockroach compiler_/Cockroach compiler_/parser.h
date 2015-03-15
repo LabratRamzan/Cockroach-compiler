@@ -6,44 +6,50 @@
 #include "token.h"
 #include "tree.h"
 
-Token** tokens;
+
+
+typedef struct
+{
+	Token** tokens;
+	unsigned long pos;
+}Info_Parser;
 
 TreeNode* Parser(Token** toks);
 
-Token* _expectedToken(enum TokenType type);
+Token* _expectedToken(enum TokenType type, Info_Parser* info);
 
-Token* _acceptToken(enum TokenType type);
+Token* _acceptToken(enum TokenType type, Info_Parser* info);
 
-int _checkToken(enum TokenType type);
+int _checkToken(enum TokenType type, Info_Parser* info);
 
-int _setNcheck( TreeNode to, TreeNode from);
+int _setNcheck( TreeNode to, TreeNode from, Info_Parser* info);
 
-void set_next_nodes(TreeNode* node, int cnt, TreeNode* nodes,...);
+void set_next_nodes(TreeNode* node, TreeNode* br1,TreeNode* br2,TreeNode* br3);
 
-TreeNode* ParsePrint();
+TreeNode* ParsePrint(Info_Parser* info);
 
-TreeNode* ParseIdentifier();
+TreeNode* ParseIdentifier(Info_Parser* info);
 
-TreeNode* ParseAssigment();
+TreeNode* ParseAssigment(Info_Parser* info);
 
-TreeNode* ParseIf();
+TreeNode* ParseIf(Info_Parser* info);
 
-TreeNode* ParseWhile();
+TreeNode* ParseWhile(Info_Parser* info);
 
-TreeNode* ParseNumber();
+TreeNode* ParseNumber(Info_Parser* info);
 
-TreeNode* ParseExpression();
+TreeNode* ParseExpression(Info_Parser* info);
 
-TreeNode* ParseExpression0();
+TreeNode* ParseExpression0(Info_Parser* info);
 
-TreeNode* ParseExpression1();
+TreeNode* ParseExpression1(Info_Parser* info);
 
-TreeNode* ParseAtom();
+TreeNode* ParseAtom(Info_Parser* info);
 
-TreeNode* ParseBreak();
+TreeNode* ParseBreak(Info_Parser* info);
 
-TreeNode* ParseStatement();
+TreeNode* ParseStatement(Info_Parser* info);
 
-TreeNode* ParseStatements();
+TreeNode* ParseStatements(Info_Parser* info);
 
 #endif
